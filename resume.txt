@@ -3,7 +3,8 @@ Vitalii Poltorak — Fullstack Developer, 5+ years of experience.
 Core stack: React, TypeScript, Next.js, Zustand, Redux/Redux Toolkit, Node.js, NestJS, Electron.
 Also: React Native, Socket.io, GraphQL, Apollo Client, REST API, PostgreSQL, PostgREST, MongoDB,
 TypeORM, Jest, Vitest, React Testing Library, Docker/Docker Compose, GitLab CI/GitHub Actions,
-Tailwind CSS, Styled Components, Material UI, Ant Design, Mixpanel, Sentry, Google Analytics.
+Tailwind CSS, Styled Components, Material UI, Ant Design, Mixpanel, Sentry, Google Analytics, 
+Redis, Kafka, Strapi, Vercel, Bootstrap, react-query, react-hook-form, AI/LLM integration.
 AI-assisted: Claude Code, Cursor, GitHub Copilot, GPT
 
 English: Intermediate.
