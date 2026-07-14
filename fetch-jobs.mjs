@@ -64,9 +64,17 @@ async function fetchFeed(url) {
   const xml = await res.text();
   const parser = new XMLParser({
     ignoreAttributes: false,
-    // Дефолтный лимит в 1000 расширений сущностей (защита от entity-expansion
-    // атак) слишком мал для реальных RSS-описаний вакансий — поднимаем его.
-    processEntities: { enabled: true, maxTotalExpansions: 10000, maxExpandedLength: 1000000 },
+    // Защита от entity-expansion атак считает лимиты на весь документ, а не
+    // на один item — большой фид с кучей &amp;/&nbsp; в описаниях легко
+    // упирается в дефолтные 1000. Реальная атака (billion laughs) даёт
+    // экспоненциальный рост вывода относительно входа, поэтому вместо
+    // отключения защиты просто масштабируем maxExpandedLength под размер
+    // самого XML — линейный рост от обычных сущностей остаётся safe.
+    processEntities: {
+      enabled: true,
+      maxTotalExpansions: 200000,
+      maxExpandedLength: Math.max(xml.length * 5, 2000000),
+    },
   });
   const data = parser.parse(xml);
   const items = data?.rss?.channel?.item;
