@@ -1,14 +1,20 @@
 // fetch-jobs.mjs
 // Проверяет RSS-ленты вакансий (Djinni + DOU), сравнивает новые вакансии
-// с резюме через Claude API и шлёт подходящие в Telegram.
+// с резюме через Claude API и шлёт подходящие в Telegram + пишет в Google Sheets.
 //
 // Запуск: node fetch-jobs.mjs
 // Требуемые переменные окружения (см. README.md):
 //   ANTHROPIC_API_KEY
 //   TELEGRAM_BOT_TOKEN
 //   TELEGRAM_CHAT_ID
+// Опциональные (для записи в Google Sheets):
+//   GOOGLE_SERVICE_ACCOUNT_EMAIL
+//   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+//   GOOGLE_SHEET_ID
+//   GOOGLE_SHEET_NAME (по умолчанию "Sheet1")
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { createSign } from "node:crypto";
 import { XMLParser } from "fast-xml-parser";
 
 // ---------- НАСТРОЙКИ ----------
@@ -34,7 +40,7 @@ const MODEL = "claude-sonnet-4-6";
 
 // ---------- СЛУЖЕБНОЕ ----------
 
-const STATE_PATH = new URL("./seen.json", import.meta.url);
+const STATE_PATH = new URL("./state/seen.json", import.meta.url);
 const RESUME_PATH = new URL("./resume.txt", import.meta.url);
 
 function loadSeen() {
@@ -50,6 +56,7 @@ function loadSeen() {
 function saveSeen(seenSet) {
   // Храним только последние 2000 ссылок, чтобы файл не разрастался бесконечно
   const arr = Array.from(seenSet).slice(-2000);
+  mkdirSync(new URL(".", STATE_PATH), { recursive: true });
   writeFileSync(STATE_PATH, JSON.stringify(arr, null, 2));
 }
 
@@ -191,6 +198,107 @@ ${resumeText}
   }
 }
 
+// ---------- GOOGLE SHEETS ----------
+
+const GOOGLE_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || "Sheet1";
+const SHEET_HEADER = ["Дата", "Оценка", "Вакансия", "Ссылка", "Причина", "Сопроводительное письмо", "Статус отклика"];
+
+function googleSheetsEnabled() {
+  return Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY &&
+      process.env.GOOGLE_SHEET_ID
+  );
+}
+
+function base64url(input) {
+  return Buffer.from(input).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// Получаем access token через OAuth2 JWT-bearer flow напрямую (без googleapis SDK),
+// подписывая JWT приватным ключом сервис-аккаунта встроенным node:crypto.
+async function getGoogleAccessToken() {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, "\n");
+  const now = Math.floor(Date.now() / 1000);
+
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: email,
+    scope: "https://www.googleapis.com/auth/spreadsheets",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+  const unsigned = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(payload))}`;
+  const signer = createSign("RSA-SHA256");
+  signer.update(unsigned);
+  signer.end();
+  const signature = signer
+    .sign(privateKey)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  const jwt = `${unsigned}.${signature}`;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Google auth failed", res.status, await res.text());
+    return null;
+  }
+  const data = await res.json();
+  return data.access_token;
+}
+
+async function ensureSheetHeader(accessToken) {
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const range = `${GOOGLE_SHEET_NAME}!A1:G1`;
+  const res = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) {
+    console.error("Sheets header check failed", res.status, await res.text());
+    return;
+  }
+  const data = await res.json();
+  if (data.values && data.values.length > 0) return;
+
+  const putRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ values: [SHEET_HEADER] }),
+    }
+  );
+  if (!putRes.ok) {
+    console.error("Sheets header write failed", putRes.status, await putRes.text());
+  }
+}
+
+async function appendToSheet(accessToken, row) {
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const range = `${GOOGLE_SHEET_NAME}!A:G`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ values: [row] }),
+  });
+  if (!res.ok) {
+    console.error("Sheets append failed", res.status, await res.text());
+  }
+}
+
 async function sendTelegram(message) {
   const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
   const res = await fetch(url, {
@@ -219,6 +327,16 @@ async function main() {
   const seen = loadSeen();
   let newCount = 0;
   let matchCount = 0;
+
+  let sheetsToken = null;
+  if (googleSheetsEnabled()) {
+    sheetsToken = await getGoogleAccessToken();
+    if (sheetsToken) {
+      await ensureSheetHeader(sheetsToken);
+    } else {
+      console.error("Не удалось получить Google access token — запись в таблицу отключена для этого запуска");
+    }
+  }
 
   for (const feedUrl of FEEDS) {
     console.log(`Проверяю: ${feedUrl}`);
@@ -249,6 +367,18 @@ async function main() {
         }
         parts.push(`\n🔗 ${link}`);
         await sendTelegram(parts.join("\n"));
+
+        if (sheetsToken) {
+          await appendToSheet(sheetsToken, [
+            new Date().toISOString().slice(0, 10),
+            score,
+            title,
+            link,
+            reason,
+            coverLetter,
+            "",
+          ]);
+        }
       }
     }
   }
