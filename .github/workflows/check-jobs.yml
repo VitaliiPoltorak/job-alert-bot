@@ -3,7 +3,7 @@ name: Check new jobs
 on:
   schedule:
     # Каждые 30 минут. Синтаксис cron — в UTC.
-    - cron: "*/30 * * * *"
+    - cron: "7, 37 * * * *"
   workflow_dispatch: {} # позволяет запустить вручную из вкладки Actions
 
 # Нужно право писать в репозиторий, чтобы закоммитить обновлённый state/seen.json
