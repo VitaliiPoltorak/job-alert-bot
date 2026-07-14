@@ -1,0 +1,129 @@
+// google-sheets.mjs
+// Общие хелперы для записи в Google Sheets через сервис-аккаунт (JWT-bearer
+// OAuth2 flow на встроенном node:crypto, без googleapis SDK).
+// Используется и в fetch-jobs.mjs (запись новых совпадений), и в
+// backfill-telegram-history.mjs (перенос истории из экспорта Telegram).
+//
+// Переменные окружения:
+//   GOOGLE_SERVICE_ACCOUNT_EMAIL
+//   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+//   GOOGLE_SHEET_ID
+//   GOOGLE_SHEET_NAME (по умолчанию "Sheet1")
+
+import { createSign } from "node:crypto";
+
+export const GOOGLE_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || "Sheet1";
+export const SHEET_HEADER = ["Дата", "Оценка", "Вакансия", "Ссылка", "Причина", "Сопроводительное письмо", "Статус отклика"];
+
+export function googleSheetsEnabled() {
+  return Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY &&
+      process.env.GOOGLE_SHEET_ID
+  );
+}
+
+function base64url(input) {
+  return Buffer.from(input).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// Получаем access token через OAuth2 JWT-bearer flow напрямую (без googleapis SDK),
+// подписывая JWT приватным ключом сервис-аккаунта встроенным node:crypto.
+export async function getGoogleAccessToken() {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, "\n");
+  const now = Math.floor(Date.now() / 1000);
+
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: email,
+    scope: "https://www.googleapis.com/auth/spreadsheets",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+  const unsigned = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(payload))}`;
+  const signer = createSign("RSA-SHA256");
+  signer.update(unsigned);
+  signer.end();
+  const signature = signer
+    .sign(privateKey)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  const jwt = `${unsigned}.${signature}`;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Google auth failed", res.status, await res.text());
+    return null;
+  }
+  const data = await res.json();
+  return data.access_token;
+}
+
+export async function ensureSheetHeader(accessToken) {
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const range = `${GOOGLE_SHEET_NAME}!A1:G1`;
+  const res = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) {
+    console.error("Sheets header check failed", res.status, await res.text());
+    return;
+  }
+  const data = await res.json();
+  if (data.values && data.values.length > 0) return;
+
+  const putRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ values: [SHEET_HEADER] }),
+    }
+  );
+  if (!putRes.ok) {
+    console.error("Sheets header write failed", putRes.status, await putRes.text());
+  }
+}
+
+// Ссылки (колонка D) уже присутствующие в таблице — для дедупликации при бэкфилле.
+export async function getExistingLinks(accessToken) {
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const range = `${GOOGLE_SHEET_NAME}!D2:D`;
+  const res = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) {
+    console.error("Sheets read failed", res.status, await res.text());
+    return new Set();
+  }
+  const data = await res.json();
+  return new Set((data.values ?? []).map((row) => row[0]).filter(Boolean));
+}
+
+export async function appendRows(accessToken, rows) {
+  if (rows.length === 0) return;
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const range = `${GOOGLE_SHEET_NAME}!A:G`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ values: rows }),
+  });
+  if (!res.ok) {
+    console.error("Sheets append failed", res.status, await res.text());
+  }
+}

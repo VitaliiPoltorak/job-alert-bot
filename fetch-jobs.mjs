@@ -1,15 +1,21 @@
 // fetch-jobs.mjs
 // Проверяет RSS-ленты вакансий (Djinni + DOU), сравнивает новые вакансии
-// с резюме через Claude API и шлёт подходящие в Telegram.
+// с резюме через Claude API и шлёт подходящие в Telegram + пишет в Google Sheets.
 //
 // Запуск: node fetch-jobs.mjs
 // Требуемые переменные окружения (см. README.md):
 //   ANTHROPIC_API_KEY
 //   TELEGRAM_BOT_TOKEN
 //   TELEGRAM_CHAT_ID
+// Опциональные (для записи в Google Sheets):
+//   GOOGLE_SERVICE_ACCOUNT_EMAIL
+//   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+//   GOOGLE_SHEET_ID
+//   GOOGLE_SHEET_NAME (по умолчанию "Sheet1")
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { XMLParser } from "fast-xml-parser";
+import { googleSheetsEnabled, getGoogleAccessToken, ensureSheetHeader, appendRows } from "./google-sheets.mjs";
 
 // ---------- НАСТРОЙКИ ----------
 
@@ -34,7 +40,7 @@ const MODEL = "claude-sonnet-4-6";
 
 // ---------- СЛУЖЕБНОЕ ----------
 
-const STATE_PATH = new URL("./seen.json", import.meta.url);
+const STATE_PATH = new URL("./state/seen.json", import.meta.url);
 const RESUME_PATH = new URL("./resume.txt", import.meta.url);
 
 function loadSeen() {
@@ -50,6 +56,7 @@ function loadSeen() {
 function saveSeen(seenSet) {
   // Храним только последние 2000 ссылок, чтобы файл не разрастался бесконечно
   const arr = Array.from(seenSet).slice(-2000);
+  mkdirSync(new URL(".", STATE_PATH), { recursive: true });
   writeFileSync(STATE_PATH, JSON.stringify(arr, null, 2));
 }
 
@@ -220,6 +227,16 @@ async function main() {
   let newCount = 0;
   let matchCount = 0;
 
+  let sheetsToken = null;
+  if (googleSheetsEnabled()) {
+    sheetsToken = await getGoogleAccessToken();
+    if (sheetsToken) {
+      await ensureSheetHeader(sheetsToken);
+    } else {
+      console.error("Не удалось получить Google access token — запись в таблицу отключена для этого запуска");
+    }
+  }
+
   for (const feedUrl of FEEDS) {
     console.log(`Проверяю: ${feedUrl}`);
     const items = await fetchFeed(feedUrl);
@@ -249,6 +266,12 @@ async function main() {
         }
         parts.push(`\n🔗 ${link}`);
         await sendTelegram(parts.join("\n"));
+
+        if (sheetsToken) {
+          await appendRows(sheetsToken, [
+            [new Date().toISOString().slice(0, 10), score, title, link, reason, coverLetter, ""],
+          ]);
+        }
       }
     }
   }

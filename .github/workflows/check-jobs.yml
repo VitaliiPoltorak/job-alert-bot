@@ -6,7 +6,7 @@ on:
     - cron: "*/30 * * * *"
   workflow_dispatch: {} # позволяет запустить вручную из вкладки Actions
 
-# Нужно право писать в репозиторий, чтобы закоммитить обновлённый seen.json
+# Нужно право писать в репозиторий, чтобы закоммитить обновлённый state/seen.json
 permissions:
   contents: write
 
@@ -36,13 +36,16 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+          GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: npm run check
 
       - name: Commit updated state
         run: |
           git config user.name "job-alert-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add seen.json
+          git add state/seen.json
           git diff --quiet --cached || git commit -m "Update seen jobs state [skip ci]"
 
           # На случай гонки с другим запуском ретраим push с рибейзом.
