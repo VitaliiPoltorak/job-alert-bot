@@ -1,0 +1,23 @@
+Vitalii Poltorak — Fullstack Developer, 5+ years of experience.
+
+Core stack: React, TypeScript, Next.js, Zustand, Redux/Redux Toolkit, Node.js, NestJS, Electron.
+Also: React Native, Socket.io, GraphQL, Apollo Client, REST API, PostgreSQL, PostgREST, MongoDB,
+TypeORM, Jest, React Testing Library, Docker/Docker Compose, GitLab CI/GitHub Actions,
+Tailwind CSS, Styled Components, Material UI, Ant Design, Mixpanel, Sentry, Google Analytics.
+
+English: Intermediate.
+
+Recent experience:
+- Senior Fullstack Developer, Mechanical Engineering AI Assistant (Aug 2023 - Aug 2025):
+  Refactored frontend architecture using Zustand and Socket.IO for real-time AI-driven CAD
+  workflows. Integrated Electron APIs for desktop file handling and telemetry (Mixpanel, Sentry).
+- Senior Fullstack Developer (Solo), Web Comparison (May-Aug 2023): React/TypeScript/NodeJS/NestJS,
+  Zustand, Socket.IO, real-time pixel-diff detection UI.
+- Middle React Developer, TMAAS Web (Jan-May 2023): Firebase, diagram management CRUD system.
+- Middle React Developer, WebTheory (Oct 2021-Jan 2023): GraphQL/Apollo/PostgREST admin dashboard
+  for water quality monitoring, Redux Toolkit.
+- Junior/Middle Frontend, Sokyra (Oct 2020-Oct 2021): Next.js, JWT auth, React Admin.
+
+Prefers: Remote work. Open to Frontend, Fullstack, or Node.js-leaning roles.
+Not a fit for: Java-heavy roles, .NET/C#, pure backend roles without any JS/TS frontend component,
+roles requiring Upper-Intermediate+ English as a hard requirement.
