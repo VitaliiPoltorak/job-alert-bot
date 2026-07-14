@@ -62,7 +62,12 @@ async function fetchFeed(url) {
     return [];
   }
   const xml = await res.text();
-  const parser = new XMLParser({ ignoreAttributes: false });
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    // Дефолтный лимит в 1000 расширений сущностей (защита от entity-expansion
+    // атак) слишком мал для реальных RSS-описаний вакансий — поднимаем его.
+    processEntities: { enabled: true, maxTotalExpansions: 10000, maxExpandedLength: 1000000 },
+  });
   const data = parser.parse(xml);
   const items = data?.rss?.channel?.item;
   if (!items) return [];
