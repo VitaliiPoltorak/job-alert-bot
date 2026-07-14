@@ -10,6 +10,12 @@ on:
 permissions:
   contents: write
 
+# Не даём параллельным запускам (например, ручному во время планового) гоняться
+# за пушем в main — ставим их в очередь вместо гонки.
+concurrency:
+  group: check-jobs
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -38,4 +44,15 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add seen.json
           git diff --quiet --cached || git commit -m "Update seen jobs state [skip ci]"
+
+          # На случай гонки с другим запуском ретраим push с рибейзом.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected, fetching and rebasing (attempt $i)..."
+            git fetch origin
+            git rebase origin/$(git rev-parse --abbrev-ref HEAD)
+            sleep $((RANDOM % 10 + 1))
+          done
           git push
