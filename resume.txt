@@ -4,6 +4,7 @@ Core stack: React, TypeScript, Next.js, Zustand, Redux/Redux Toolkit, Node.js, N
 Also: React Native, Socket.io, GraphQL, Apollo Client, REST API, PostgreSQL, PostgREST, MongoDB,
 TypeORM, Jest, React Testing Library, Docker/Docker Compose, GitLab CI/GitHub Actions,
 Tailwind CSS, Styled Components, Material UI, Ant Design, Mixpanel, Sentry, Google Analytics.
+AI-assisted: Claude Code, Cursor, GitHub Copilot, GPT
 
 English: Intermediate.
 
