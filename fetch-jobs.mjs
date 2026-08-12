@@ -251,7 +251,7 @@ async function main() {
       newCount++;
 
       const { score, reason } = await scoreMatch(resumeText, title, description);
-      console.log(`  [${score}] ${title}`);
+      console.log(`  [${score}] ${title} — ${reason}`);
 
       if (score >= MATCH_THRESHOLD) {
         matchCount++;
