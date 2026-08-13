@@ -1,25 +1,38 @@
 Vitalii Poltorak — Fullstack Developer, 5+ years of experience.
 
-Core stack: React, TypeScript, Next.js, Zustand, Redux/Redux Toolkit, Node.js, NestJS, Electron.
-Also: React Native, Socket.io, GraphQL, Apollo Client, REST API, PostgreSQL, PostgREST, MongoDB,
-TypeORM, Jest, Vitest, React Testing Library, Docker/Docker Compose, GitLab CI/GitHub Actions,
-Tailwind CSS, Styled Components, Material UI, Ant Design, Mixpanel, Sentry, Google Analytics, 
-Redis, Kafka, Strapi, Vercel, Bootstrap, react-query, react-hook-form, AI/LLM integration.
-AI-assisted: Claude Code, Cursor, GitHub Copilot, GPT
+Core stack: React, TypeScript, Next.js, Zustand, Redux/Redux Toolkit, TanStack Query, Node.js, NestJS, Electron.
+Also: React Native, Socket.IO, GraphQL, Apollo Client, REST API, PostgreSQL, PostgREST, MongoDB,
+TypeORM, Prisma, Firebase, Jest, Vitest, React Testing Library, Docker/Docker Compose, Kubernetes, AWS,
+GitLab CI/GitHub Actions, Tailwind CSS, Styled Components, Material UI, Ant Design, Bootstrap, Flowbite,
+Konva, Three.js, Mixpanel, Sentry, Google Analytics, Redis, Kafka, RabbitMQ, JWT/OAuth/RBAC, Swagger/OpenAPI,
+Vercel, Netlify, Heroku, react-hook-form, AI/LLM integration.
+AI-assisted: Claude Code, Cursor, GitHub Copilot.
 
-English: Intermediate.
+English: B2 (Upper-intermediate).
 
 Recent experience:
-- Senior Fullstack Developer, Mechanical Engineering AI Assistant (Aug 2023 - Aug 2025):
-  Refactored frontend architecture using Zustand and Socket.IO for real-time AI-driven CAD
-  workflows. Integrated Electron APIs for desktop file handling and telemetry (Mixpanel, Sentry).
+- Senior Fullstack Developer, Mechanical Engineering AI Assistant (Aug 2023 - Jun 2026):
+  Refactored frontend architecture (Zustand, Socket.IO) with a team of 8 engineers for a real-time
+  AI-driven CAD product used by tens of thousands of users. Built canvas-based CAD rendering (Konva)
+  and native desktop file handling via Electron. Raised test coverage to ~60% (Jest, RTL, Vitest);
+  instrumented with Mixpanel and Sentry for production visibility.
 - Senior Fullstack Developer (Solo), Web Comparison (May-Aug 2023): React/TypeScript/NodeJS/NestJS,
-  Zustand, Socket.IO, real-time pixel-diff detection UI.
+  Zustand, Socket.IO, Kubernetes, AWS — real-time pixel-diff detection UI for website screenshots.
 - Middle React Developer, TMAAS Web (Jan-May 2023): Firebase, diagram management CRUD system.
 - Middle React Developer, WebTheory (Oct 2021-Jan 2023): GraphQL/Apollo/PostgREST admin dashboard
   for water quality monitoring, Redux Toolkit.
-- Junior/Middle Frontend, Sokyra (Oct 2020-Oct 2021): Next.js, JWT auth, React Admin.
+- Junior/Middle Frontend, SKR (Oct 2020-Oct 2021): Next.js, JWT auth, React Admin.
+
+Last contract ended June 2026 — currently between roles, available immediately.
+
+Accessibility (WCAG/ARIA): Hands-on experience from a ~1.5-month project (a few years ago, not
+listed in the CV as a separate line) where the client targeted WCAG AAA-level (ADA level 3)
+compliance. Designed and implemented the markup/structure (semantic HTML, ARIA attributes) to make
+that level achievable, and used an automated accessibility scanner (WordPress plugin-based) to
+audit the site. Final compliance landed at WCAG AA (ADA level 2), since full AAA also depended on
+design and content decisions (alt text, content structure) made by designers/content creators
+outside of dev control. Comfortable implementing WCAG AA-level markup and ARIA; not claiming deep
+AAA-level accessibility specialization.
 
 Prefers: Remote work. Open to Frontend, Fullstack, or Node.js-leaning roles.
-Not a fit for: Java-heavy roles, .NET/C#, pure backend roles without any JS/TS frontend component,
-roles requiring Upper-Intermediate+ English as a hard requirement.
+Not a fit for: Java-heavy roles, .NET/C#, pure backend roles without any JS/TS frontend component.
