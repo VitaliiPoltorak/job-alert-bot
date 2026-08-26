@@ -5,7 +5,7 @@ Also: React Native, Socket.IO, GraphQL, Apollo Client, REST API, PostgreSQL, Pos
 TypeORM, Prisma, Firebase, Jest, Vitest, React Testing Library, Docker/Docker Compose, Kubernetes, AWS,
 GitLab CI/GitHub Actions, Tailwind CSS, Styled Components, Material UI, Ant Design, Bootstrap, Flowbite,
 Konva, Three.js, Mixpanel, Sentry, Google Analytics, Redis, Kafka, RabbitMQ, JWT/OAuth/RBAC, Swagger/OpenAPI,
-Vercel, Netlify, Heroku, react-hook-form, AI/LLM integration.
+Vercel, Netlify, Heroku, react-hook-form, AI/LLM integration, Turborepo, pnpm workspaces, Vite, react-i18next.
 AI-assisted: Claude Code, Cursor, GitHub Copilot.
 
 English: B2 (Upper-intermediate).
@@ -24,6 +24,33 @@ Recent experience:
 - Junior/Middle Frontend, SKR (Oct 2020-Oct 2021): Next.js, JWT auth, React Admin.
 
 Last contract ended June 2026 — currently between roles, available immediately.
+
+Personal project — Household (ongoing, since Jul 2026, github.com/VitaliiPoltorak/household):
+Family finance & shopping management app, built solo as a NestJS microservices monorepo
+(pnpm workspaces + Turborepo) to explore a service-oriented architecture end to end. API
+gateway fronting auth/household/finance/shopping/realtime-gateway services, each with its own
+Postgres schema; async inter-service events over Kafka (KRaft, HMAC-signed envelopes, retry +
+DLQ); Redis for sessions/caching; Socket.IO (+ redis-adapter) for live multi-client updates.
+Web client in React 18 + Vite + TanStack Query + Tailwind, react-hook-form/zod, react-i18next
+(en/uk/de/es), light/dark/system theming. Auth hardening: Google/Apple/Facebook OAuth alongside
+email+password with mailbox verification, Argon2id hashing, zxcvbn strength scoring, HaveIBeenPwned
+checks, and per-account lockout. Automated API regression via a Postman/Newman scenario collection
+gated in CI, plus Vitest/RTL/MSW integration tests on the web app.
+Built and run as an AI-orchestrated "dark factory": Claude Code agents do the implementation work
+under a written engineering constitution (CLAUDE.md + custom skills/git hooks) that enforces a
+branch→CI→squash-merge workflow, mandatory integration + Postman/Newman tests before any issue
+closes, and up-to-date docs on every PR — 280+ PRs shipped solo in under a month, including three
+internal audits (security, bugs, architecture/SOLID+GRASP) that surfaced and fixed ~60 issues, at a
+quality bar indistinguishable from a staffed team's output.
+
+Personal project — Job Alert Bot (ongoing, since Jul 2026, github.com/VitaliiPoltorak/job-alert-bot):
+Automated job-search pipeline, built to replace manual board-browsing with a 30-minute polling cycle.
+Node.js script on a GitHub Actions cron pulls Djinni/DOU RSS feeds, scores each new listing against
+my resume via the Claude API, and generates a language-matched cover letter for strong matches; both
+are pushed to a Telegram bot and, optionally, appended to Google Sheets (using a hand-rolled service-
+account JWT-bearer OAuth2 flow on node:crypto, no googleapis SDK) for tracking application status.
+Seen-listing state is self-committed back to the repo to dedupe across scheduled runs, with retry-on-
+push-conflict handling for overlapping Actions runs.
 
 Accessibility (WCAG/ARIA): Hands-on experience from a ~1.5-month project (a few years ago, not
 listed in the CV as a separate line) where the client targeted WCAG AAA-level (ADA level 3)
