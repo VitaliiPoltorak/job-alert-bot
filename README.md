@@ -1,11 +1,15 @@
 # Job Alert Bot
 
-Checks new job listings on Djinni and DOU (via their official RSS feeds),
-compares each new listing against your resume via the Claude API, and sends
-matches (score ≥ 65/100) to Telegram along with a cover letter.
-Optionally, each such listing is also logged as a row in Google Sheets,
-so it's easy to track which applications you've already sent. Runs for free
-on GitHub Actions on a schedule (every 30 minutes).
+An automated job-search pipeline I built to cut hours of manual browsing
+down to a 30-minute polling cycle. It monitors new listings on Djinni and
+DOU (via their official RSS feeds), scores each one against my resume using
+the Claude API, and sends only strong matches (score ≥ 65/100) to Telegram
+along with an auto-generated cover letter. Matches are also optionally
+logged to Google Sheets to track application status. Runs entirely free on
+GitHub Actions, on a schedule.
+
+**Stack:** Node.js, GitHub Actions (cron), Claude API, Telegram Bot API,
+Google Sheets API.
 
 ## How it works
 
