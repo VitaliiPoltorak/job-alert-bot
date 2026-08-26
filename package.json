@@ -1,0 +1,16 @@
+{
+  "name": "job-alert-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Checks Djinni/DOU job RSS feeds, compares them against a resume via the Claude API, and sends matches to Telegram",
+  "scripts": {
+    "check": "node fetch-jobs.mjs"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.7"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

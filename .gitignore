@@ -1,0 +1,7 @@
+/node_modules
+/.claude
+/.idea
+.env
+result.json
+grouth-quest.md
+.DS_Store

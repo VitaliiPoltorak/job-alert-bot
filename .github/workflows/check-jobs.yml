@@ -1,0 +1,61 @@
+name: Check new jobs
+
+on:
+  schedule:
+    # Every 30 minutes. Cron syntax is in UTC.
+    - cron: "7,37 * * * *"
+  workflow_dispatch: {} # allows manual runs from the Actions tab
+
+# Needs write access to the repo to commit the updated state/seen.json
+permissions:
+  contents: write
+
+# Don't let concurrent runs (e.g. a manual one during a scheduled one) race
+# to push to main — queue them instead.
+concurrency:
+  group: check-jobs
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run job check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+          GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        run: npm run check
+
+      - name: Commit updated state
+        run: |
+          git config user.name "job-alert-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/seen.json
+          git diff --quiet --cached || git commit -m "Update seen jobs state [skip ci]"
+
+          # In case of a race with another run, retry the push with a rebase.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected, fetching and rebasing (attempt $i)..."
+            git fetch origin
+            git rebase origin/$(git rev-parse --abbrev-ref HEAD)
+            sleep $((RANDOM % 10 + 1))
+          done
+          git push
