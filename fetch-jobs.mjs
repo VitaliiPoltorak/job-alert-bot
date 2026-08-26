@@ -270,7 +270,7 @@ async function main() {
           escapeHtml(reason),
         ];
         if (coverLetter) {
-          parts.push(`\n📝 <b>Супровідний лист:</b>\n${escapeHtml(coverLetter)}`);
+          parts.push(`\n📝 <b>Супровідний лист:</b>\n<pre>${escapeHtml(coverLetter)}</pre>`);
         }
         parts.push(`\n🔗 ${link}`);
         await sendTelegram(parts.join("\n"));
