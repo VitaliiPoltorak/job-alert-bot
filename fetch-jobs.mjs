@@ -159,13 +159,20 @@ JOB LISTING:
 Title: ${jobTitle}
 Description: ${jobDescription.slice(0, 3000)}
 
-Detect the language the job listing (title + description) is written in, and write
-the cover letter in THAT SAME language (e.g. if the listing is in English, write the
-letter in English; if in Ukrainian, write it in Ukrainian; if in another language,
-match that language).
+Detect the language of the listing primarily from the DESCRIPTION text, and write
+the cover letter in THAT SAME language (e.g. if the description is in English, write
+the letter in English; if in Ukrainian, write it in Ukrainian; if in another language,
+match that language). Some job boards append a company name and location in Ukrainian
+at the end of the title regardless of the listing's actual language — ignore that part
+of the title for language detection and trust the description body instead.
 Keep the letter short (2-4 sentences), first person, with no greeting or sign-off
 like "Best regards" — just the letter text.
 Mention 2-3 skills/projects from the resume most relevant to this listing.
+Do not use em dashes ("—") anywhere in the letter; use periods or commas instead.
+If the letter ends up in English, write it the way a non-native speaker at a B1+/B2-
+level would: simple, natural sentences and everyday word choices, not polished
+corporate or native-level phrasing. Avoid buzzwords like "passionate", "leverage",
+"synergy", or "excited to apply".
 Answer STRICTLY in JSON format with no markdown formatting:
 {"coverLetter": "<letter text in the job listing's language>"}`;
 
